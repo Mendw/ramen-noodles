@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework import status
 
 from django.shortcuts import get_object_or_404
 
@@ -80,14 +81,14 @@ class SearchView(APIView):
             return Response("You must include a search parameter")
 
         goals = GoalSerializer(
-            Goal.objects.filter(
+            Goal.objects.filter(                #pylint: disable=no-member
                 content__icontains=param
             ),
             many = True
         )
 
         days = DaySerializer(
-            Day.objects.filter(
+            Day.objects.filter(                 #pylint: disable=no-member
                 activities__icontains=param
             ),
             many = True
@@ -108,7 +109,7 @@ class GoalList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         year, month = self.parse_date()
-        return Goal.objects.filter(year__exact = year, month__exact = month)
+        return Goal.objects.filter(year__exact = year, month__exact = month)    #pylint: disable=no-member
 
     def perform_create(self, serializer):
         year, month = self.parse_date()
@@ -116,9 +117,18 @@ class GoalList(generics.ListCreateAPIView):
 
 
 class GoalDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Goal.objects.all()
+    queryset = Goal.objects.all()                                               #pylint: disable=no-member
     serializer_class = GoalSerializer
 
-class DayDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Day.objects.all()
-    serializer_class = DaySerializer
+class DayDetail(APIView):
+    def get(self, request, date, *args, **kwargs):
+        instance = get_object_or_404(Day, date=date)
+        return DaySerializer(instance=instance).data
+
+    def post(self, request, date, *args, **kwargs):
+        instance, created = Day.objects.get_or_create(date=date)                #pylint: disable=no-member
+        serializer = DaySerializer(instance=instance, data=request.data)
+        serializer.save()
+        
+        response_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(serializer.data, status=response_status)

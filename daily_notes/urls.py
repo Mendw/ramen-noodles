@@ -35,7 +35,7 @@ urlpatterns = [
     path('', Index.as_view(), name='index'),
     path('goals/<month:date>/' ,GoalList.as_view(), name='goal-list'),
     path('goals/id/<int:pk>/', GoalDetail.as_view(), name='goal-detail'),
-    path('days/<date:pk>/', DayDetail.as_view(), name='day-detail'),
+    path('days/<date:date>/', DayDetail.as_view(), name='day-detail'),
     path('search/', SearchView.as_view(), name='search')
 ]
 
